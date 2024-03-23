@@ -12,7 +12,7 @@ const IBMPlex = IBM_Plex_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Image",
+  title: "Imagine",
   description: "Generatore di immagini basato sull'intelligenza artificiale",
 };
 
