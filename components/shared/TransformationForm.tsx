@@ -24,29 +24,40 @@ import {
 } from "@/components/ui/form";
 
 import { Input } from "@/components/ui/input";
-import { aspectRatioOptions, defaultValues, transformationTypes } from "@/constants";
+import {
+  aspectRatioOptions,
+  defaultValues,
+  transformationTypes,
+} from "@/constants";
 import { CustomField } from "./CustomField";
 import { useState } from "react";
 import { Value } from "@radix-ui/react-select";
 import { AspectRatioKey } from "@/lib/utils";
+import { config } from "process";
 
 export const formSchema = z.object({
   title: z.string(),
   aspectRatio: z.string().optional(),
   color: z.string().optional(),
+  prompt: z.string().optional(), // insert on 25.03.24
   publicId: z.string(),
 });
 
 const TransformationForm = ({
   action,
   data = null,
-  userId, type, creditBalance
+  userId,
+  type,
+  creditBalance,
+  config = null,
 }: TransformationFormProps) => {
-    const transfornationType= transformationTypes [type];
-    const [image, setImage] = useState(data)
-    const [newTransformation, setNewTransformation] = useState<Transformations|null>(null);
-
-
+  const transfornationType = transformationTypes[type];
+  const [image, setImage] = useState(data);
+  const [newTransformation, setNewTransformation] =
+    useState<Transformations | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isTransforming, setIsTransforming] = useState(false);
+  const [transormationConfig, setTransormationConfig] = useState(config);
 
   const initialValues =
     data && action === "Update"
@@ -70,51 +81,114 @@ const TransformationForm = ({
     console.log(values);
   }
 
-  const onSelectFieldHandler = (value:string, onChangeField:(value: string) => void)=>{
-    const imageSize = aspectRatioOptions[value as AspectRatioKey]
-}
+  const onSelectFieldHandler = (
+    value: string,
+    onChangeField: (value: string) => void
+  ) => {
+    const imageSize = aspectRatioOptions[value as AspectRatioKey]; // Attempted to verify 25_03_24
+  };
+
+  const onInputChangeHandler = (
+    fieldName: string,
+    value: string,
+    onChangeField: (value: string) => void
+  ) => {};
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <CustomField
-            control={form.control}
-            name="title"
-            formLabel="Image Title"
-            className="w-full"
-            render={({ field }) => <Input {...field} className="input-field" />}
+          control={form.control}
+          name="title"
+          formLabel="Image Title"
+          className="w-full"
+          render={({ field }) => <Input {...field} className="input-field" />}
         />
 
-      {type === "fill" && (
-        <CustomField 
+        {type === "fill" && (
+          <CustomField
             control={form.control}
             name="aspectRatio"
             formLabel="Aspect Ratio"
             className="w-full"
-            render={({ field }) => 
-            <Select
+            render={({ field }) => (
+              <Select
                 onValueChange={(value) =>
-                onSelectFieldHandler(value,field.onChange)}
+                  onSelectFieldHandler(value, field.onChange)
+                }
                 value={field.value}
-            >
+              >
                 <SelectTrigger className="select-field">
-                    <SelectValue placeholder="Select size" />
+                  <SelectValue placeholder="Select size" />
                 </SelectTrigger>
                 <SelectContent>
-                    {Object.keys(aspectRatioOptions).map
-                    ((key=>(
-                        <SelectItem key={key} value={key} 
-                         className="select-item">
-                         {aspectRatioOptions [key as 
-                         AspectRatioKey].label}
-                       </SelectItem>
-                    ))} 
+                  {Object.keys(aspectRatioOptions).map((key) => (
+                    <SelectItem key={key} value={key} className="select-item">
+                      {aspectRatioOptions[key as AspectRatioKey].label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
-            </Select>
-            )} 
-        />
+              </Select>
+            )}
+          />
         )}
-    </form>
+
+        {(type === "remove" || type === "recolor") && (
+          <div className="prompt-field">
+            <CustomField
+              control={form.control}
+              name="prompt"
+              formLabel={
+                type === "remove" ? "Object to remove" : "Object to recolor"
+              }
+              className="w-full"
+              render={({ field }) => (
+                <Input
+                  value={field.value}
+                  className="input-field"
+                  onChange={(e) =>
+                    onInputChangeHandler(
+                      "prompt",
+                      e.target.value,
+                      //type,
+                      field.onChange
+                    )
+                  }
+                />
+              )}
+            />
+            {type === "recolor" && (
+              <CustomField
+                control={form.control}
+                name="color"
+                formLabel="Replacement color"
+                className="w-full"
+                render={({ field }) => (
+                  <Input
+                    value={field.value}
+                    className="input-field"
+                    onChange={(e) =>
+                      onInputChangeHandler(
+                        "color",
+                        e.target.value,
+                        //'recolor'
+                        field.onChange
+                      )
+                    }
+                  />
+                )}
+              />
+            )}
+          </div>
+        )}
+        <Button
+          type="submit"
+          className="submit-button capitalize"
+          disabled={isSubmitting}
+        >
+          Submit
+        </Button>
+      </form>
     </Form>
   );
 };
